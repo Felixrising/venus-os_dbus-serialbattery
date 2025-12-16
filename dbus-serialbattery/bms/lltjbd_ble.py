@@ -71,6 +71,7 @@ class LltJbd_Ble(LltJbd):
         logger.info("BLE client disconnected")
 
     async def bt_main_loop(self):
+        ok = False
         logger.info("|- Try to connect to LltJbd_Ble at " + self.address)
         try:
             self.device = await BleakScanner.find_device_by_address(self.address, cb=dict(use_bdaddr=True))
@@ -90,8 +91,8 @@ class LltJbd_Ble(LltJbd):
             sleep(5)
 
         if not self.device:
-            self.run = False
-            return
+            logger.error("BLE device not found, will retry")
+            return False
 
         try:
             async with BleakClient(self.device, disconnected_callback=self.on_disconnect) as client:
@@ -103,6 +104,7 @@ class LltJbd_Ble(LltJbd):
                 while self.run and client.is_connected and self.main_thread.is_alive():
                     await asyncio.sleep(0.1)
             self.bt_loop = None
+            ok = True
 
         # Exception occurred: TimeoutError() of type <class 'asyncio.exceptions.TimeoutError'>
         except asyncio.exceptions.TimeoutError:
@@ -110,31 +112,33 @@ class LltJbd_Ble(LltJbd):
             file = exception_traceback.tb_frame.f_code.co_filename
             line = exception_traceback.tb_lineno
             logger.error(f"BleakClient(): asyncio.exceptions.TimeoutError: {repr(exception_object)} of type {exception_type} " f"in {file} line #{line}")
-            # needed?
-            self.run = False
-            return
+            return False
 
         except TimeoutError:
             exception_type, exception_object, exception_traceback = sys.exc_info()
             file = exception_traceback.tb_frame.f_code.co_filename
             line = exception_traceback.tb_lineno
             logger.error(f"BleakClient(): TimeoutError: {repr(exception_object)} of type {exception_type} " f"in {file} line #{line}")
-            # needed?
-            self.run = False
-            return
+            return False
 
         except Exception:
             exception_type, exception_object, exception_traceback = sys.exc_info()
             file = exception_traceback.tb_frame.f_code.co_filename
             line = exception_traceback.tb_lineno
             logger.error(f"BleakClient(): Exception occurred: {repr(exception_object)} of type {exception_type} " f"in {file} line #{line}")
-            # needed?
-            self.run = False
-            return
+            return False
+
+        return ok
 
     def background_loop(self):
+        backoff = 1
         while self.run and self.main_thread.is_alive():
-            asyncio.run(self.bt_main_loop())
+            ok = asyncio.run(self.bt_main_loop())
+            if not ok and self.run and self.main_thread.is_alive():
+                sleep(backoff)
+                backoff = min(backoff * 2, 30)
+            else:
+                backoff = 1
 
     async def async_test_connection(self):
         if self.hci_uart_ok:
@@ -276,7 +280,10 @@ class LltJbd_Ble(LltJbd):
         os.system("rmmod btbcm")
         os.system("modprobe hci_uart")
         os.system("modprobe btbcm")
-        sys.exit(1)
+        # allow the background loop to restart cleanly
+        self.run = True
+        self.bt_loop = None
+        self.device = None
         # execfile = open("/tmp/dbus-blebattery-hciattach", "r")
         # sleep(5)
         # os.system(execfile.readline())

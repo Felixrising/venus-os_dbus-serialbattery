@@ -1,7 +1,6 @@
 import threading
 import asyncio
 import subprocess
-import sys
 from bleak import BleakClient
 from time import sleep
 from utils import logger, BLUETOOTH_FORCE_RESET_BLE_STACK
@@ -44,10 +43,8 @@ class Syncron_Ble:
         connected_ok = self.ble_connection_ready.wait(10)
         if not thread_start_ok:
             logger.error("bluetooh LE thread took to long to start")
-        if not connected_ok:
+        if not connected_ok or not self.connected:
             logger.error(f"bluetooh LE connection to address: {self.address} took to long to inititate")
-        else:
-            self.connected = True
 
     def initiate_ble_thread_main(self):
         asyncio.run(self.async_main(self.address))
@@ -63,23 +60,39 @@ class Syncron_Ble:
 
     def client_disconnected(self, client):
         logger.error(f"bluetooh device with address: {self.address} disconnected")
+        self.connected = False
+
+    async def _safe_disconnect(self):
+        self.connected = False
+        if not self.client:
+            return
+        try:
+            await self.client.disconnect()
+        except Exception as e:
+            logger.debug(f"BLE safe disconnect failed for {self.address}: {repr(e)}")
 
     async def connect_to_bms(self, address):
         self.client = BleakClient(address, disconnected_callback=self.client_disconnected)
         try:
             logger.info("initiating BLE connection to: " + address)
             await self.client.connect()
+            if not self.client.is_connected:
+                raise RuntimeError("BleakClient.connect returned but device not connected")
             logger.info("connected to bluetooh device" + address)
             await self.client.start_notify(self.read_characteristic, self.notify_read_callback)
-
+            self.connected = True
+            if not self.ble_connection_ready.is_set():
+                self.ble_connection_ready.set()
         except Exception as e:
-            logger.error("Failed when trying to connect", e)
+            logger.error(f"Failed when trying to connect to {address}: {repr(e)}")
+            await self._safe_disconnect()
             return False
-        finally:
-            self.ble_connection_ready.set()
+
+        try:
             while self.client.is_connected and self.main_thread.is_alive():
                 await asyncio.sleep(0.1)
-            await self.client.disconnect()
+        finally:
+            await self._safe_disconnect()
 
     # saves response and tells the command sender that the response has arived
     def notify_read_callback(self, sender, data: bytearray):
@@ -89,19 +102,39 @@ class Syncron_Ble:
     async def ble_thread_send_com(self, command):
         self.response_event = asyncio.Event()
         self.response_data = False
-        await self.client.write_gatt_char(self.write_characteristic, command, True)
-        await asyncio.wait_for(self.response_event.wait(), timeout=1)  # Wait for the response notification
-        self.response_event = False
+        try:
+            await self.client.write_gatt_char(self.write_characteristic, command, True)
+            await asyncio.wait_for(self.response_event.wait(), timeout=1)  # Wait for the response notification
+        except asyncio.TimeoutError:
+            logger.warning(f"BLE notify timeout while waiting for response from {self.address}")
+            return False
+        except Exception as e:
+            logger.error(f"BLE write/notify failed for {self.address}: {repr(e)}")
+            return False
+        finally:
+            self.response_event = False
         return self.response_data
 
     async def send_coroutine_to_ble_thread_and_wait_for_result(self, coroutine):
-        bt_task = asyncio.run_coroutine_threadsafe(coroutine, self.ble_async_thread_event_loop)
-        result = await asyncio.wait_for(asyncio.wrap_future(bt_task), timeout=1.5)
-        return result
+        try:
+            bt_task = asyncio.run_coroutine_threadsafe(coroutine, self.ble_async_thread_event_loop)
+            result = await asyncio.wait_for(asyncio.wrap_future(bt_task), timeout=1.5)
+            return result
+        except asyncio.TimeoutError:
+            logger.warning(f"BLE coroutine timeout for {self.address}")
+            return False
+        except Exception as e:
+            logger.error(f"BLE coroutine failed for {self.address}: {repr(e)}")
+            return False
 
     def send_data(self, data):
-        data = asyncio.run(self.send_coroutine_to_ble_thread_and_wait_for_result(self.ble_thread_send_com(data)))
-        return data
+        try:
+            data = asyncio.run(self.send_coroutine_to_ble_thread_and_wait_for_result(self.ble_thread_send_com(data)))
+            return data
+        except Exception as e:
+            logger.error(f"BLE send_data failed for {self.address}: {repr(e)}")
+            self.connected = False
+            return False
 
 
 def restart_ble_hardware_and_bluez_driver():
@@ -171,7 +204,5 @@ def restart_ble_hardware_and_bluez_driver():
     logger.info(f"bluetooth start exit code: {result.returncode}")
     logger.info(f"bluetooth start output: {result.stdout}")
 
-    logger.info("System Bluetooth daemon should have been restarted")
-    logger.info("Exit driver for clean restart")
-
-    sys.exit(1)
+    logger.info("System Bluetooth daemon restart attempt finished")
+    return True

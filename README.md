@@ -4,6 +4,12 @@ This driver is for Venus OS devices (any GX device sold by Victron or a Raspberr
 
 The driver will communicate with a Battery Management System (BMS) that support serial (RS232, RS485 or TTL UART) and Bluetooth communication (see [BMS feature comparison](https://mr-manuel.github.io/venus-os_dbus-serialbattery_docs/general/features#bms-feature-comparison) for details). The data is then published to the Venus OS system (dbus). The main purpose is to act as a Battery Monitor in your GX and supply State of Charge (SoC) and other values to the inverter/charger.
 
+## Using this fork
+
+* Clone from this fork: `git clone https://github.com/Felixrising/venus-os_dbus-serialbattery.git`
+* Allow Actions in repo settings (`Actions → General → Allow all actions and reusable workflows`, and set `Workflow permissions` to `Read and write`) so CI runs.
+* If you publish artifacts or overlays, create tags/releases in **this** fork; upstream releases do not propagate automatically.
+
 ## History
 
 The first version of this driver was released by [Louisvdw](https://github.com/Louisvdw/dbus-serialbattery) in September 2020.
