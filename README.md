@@ -10,6 +10,16 @@ The driver will communicate with a Battery Management System (BMS) that support 
 * Allow Actions in repo settings (`Actions → General → Allow all actions and reusable workflows`, and set `Workflow permissions` to `Read and write`) so CI runs.
 * If you publish artifacts or overlays, create tags/releases in **this** fork; upstream releases do not propagate automatically.
 
+### Call for testers (BLE resilience)
+
+We’ve improved Bluetooth resilience (JKBMS and general BLE handling). Please help test:
+
+- Noisy RF / dropouts: verify disconnects flip `/Connected` to 0, `/System/NrOfModulesOnline` to 0, set `/Alarms/BmsCable`, and recover to 1 when the link returns.
+- Stale notifications with `BLUETOOTH_FORCE_RESET_BLE_STACK` **disabled**: let data stall ≥45 s; the driver should reconnect with exponential backoff (up to ~30 s) and resume updates; check `/Info/LastDataUpdate` increases after recovery.
+- With forced stack reset **enabled**: confirm adapter reset still clears stuck notifications and data resumes.
+- Rapid disconnect/reconnect bursts: ensure reconnection pacing doesn’t thrash (backoff grows then resets after stable data).
+- Victron integration: systemcalc/VRM should reflect offline/online correctly when `/Connected` flips; no unexpected errors in logs.
+
 ## History
 
 The first version of this driver was released by [Louisvdw](https://github.com/Louisvdw/dbus-serialbattery) in September 2020.
