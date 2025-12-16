@@ -21,6 +21,7 @@ import sys
 class Jkbms_Ble(Battery):
     BATTERYTYPE = "JKBMS BLE"
     resetting = False
+    reconnect_backoff = 1
 
     def __init__(self, port, baud, address):
         super(Jkbms_Ble, self).__init__(port, baud, address)
@@ -183,9 +184,20 @@ class Jkbms_Ble(Battery):
                     self.jk.start_scraping()
                     sleep(2)
 
+                # If the stack reset is disabled but we are stalled for too long, force a reconnect cycle
+                if not BLUETOOTH_FORCE_RESET_BLE_STACK and not self.resetting and last_update >= 45:
+                    logger.warning("Jkbms_Ble: Stale data without BLE stack reset; restarting scraping thread.")
+                    self.resetting = True
+                    self.jk.stop_scraping()
+                    sleep(self.reconnect_backoff)
+                    self.reconnect_backoff = min(self.reconnect_backoff * 2, 30)
+                    self.jk.start_scraping()
+                    return False
+
                 return False
             else:
                 self.resetting = False
+                self.reconnect_backoff = 1
 
             # update cell voltages
             for c in range(self.cell_count):

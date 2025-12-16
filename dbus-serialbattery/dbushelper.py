@@ -45,6 +45,7 @@ class DbusHelper:
         self.instance = 1
         self.settings = None
         self.error = {"count": 0, "timestamp_first": None, "timestamp_last": None}
+        self.last_data_timestamp: int | None = None
         self.cell_voltages_good = None
         self._dbusname = (
             "com.victronenergy.battery."
@@ -490,6 +491,7 @@ class DbusHelper:
         self._dbusservice.add_path("/FirmwareVersion", str(utils.DRIVER_VERSION))
         self._dbusservice.add_path("/HardwareVersion", self.battery.hardware_version)
         self._dbusservice.add_path("/Connected", 1)
+        self._dbusservice.add_path("/Info/LastDataUpdate", None, writeable=False)
         self._dbusservice.add_path(
             "/CustomName",
             self.settings["CustomName"],
@@ -805,6 +807,7 @@ class DbusHelper:
 
                 self.battery.online = True
                 self.battery.connection_info = "Connected"
+                self.last_data_timestamp = int(time())
 
                 # unblock charge/discharge, if it was blocked when battery went offline
                 if utils.BLOCK_ON_DISCONNECT:
@@ -959,6 +962,8 @@ class DbusHelper:
         # https://github.com/victronenergy/veutil/blob/master/src/qt/bms_error.cpp
         self._dbusservice["/ErrorCode"] = self.battery.error_code
         self._dbusservice["/ConnectionInformation"] = self.battery.connection_info
+        self._dbusservice["/Connected"] = 1 if self.battery.online else 0
+        self._dbusservice["/Info/LastDataUpdate"] = self.last_data_timestamp
 
         self._dbusservice["/History/DeepestDischarge"] = (
             abs(self.battery.history.deepest_discharge) * -1 if self.battery.history.deepest_discharge is not None else None

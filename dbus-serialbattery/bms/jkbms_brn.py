@@ -518,18 +518,21 @@ class Jkbms_Brn:
         logger.debug("--> asy_connect_and_scrape(): Exit")
 
     def monitor_scraping(self):
-        # while self.should_be_scraping is True:
+        backoff = 1
         while self.should_be_scraping is True and self.main_thread.is_alive():
             # create new thread and run connect_and_scrape()
             self.bt_thread = threading.Thread(target=self.connect_and_scrape, name="Thread-JKBMS-Connect-and-Scrape")
             self.bt_thread.start()
             logger.debug("scraping thread started -> main thread id: " + str(self.main_thread.ident) + " scraping thread: " + str(self.bt_thread.ident))
             self.bt_thread.join()
-            if self.should_be_scraping is True:
+            if self.should_be_scraping is True and self.main_thread.is_alive():
                 logger.debug("scraping thread ended: reseting bluetooth and restarting")
                 if self.bt_reset is not None:
                     self.bt_reset()
-                sleep(2)
+                sleep(backoff)
+                backoff = min(backoff * 2, 30)
+            else:
+                backoff = 1
 
     def start_scraping(self):
         self.main_thread = threading.current_thread()
