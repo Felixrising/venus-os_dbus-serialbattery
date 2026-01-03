@@ -2,6 +2,7 @@
 import sys
 import os
 import platform
+import json
 import dbus
 import traceback
 from time import sleep, time
@@ -492,6 +493,8 @@ class DbusHelper:
         self._dbusservice.add_path("/HardwareVersion", self.battery.hardware_version)
         self._dbusservice.add_path("/Connected", 1)
         self._dbusservice.add_path("/Info/LastDataUpdate", None, writeable=False)
+        # JSON-encoded lightweight stats (e.g. BLE connectivity)
+        self._dbusservice.add_path("/Info/BleStatsJson", None, writeable=True)
         self._dbusservice.add_path(
             "/CustomName",
             self.settings["CustomName"],
@@ -775,8 +778,10 @@ class DbusHelper:
 
         :param loop: The main loop of the driver.
         """
-        RETRY_CYCLE_SHORT_COUNT = 10
-        RETRY_CYCLE_LONG_COUNT = 60
+        # How long we wait without data before marking offline and raising BmsCable alarm.
+        # Configurable via OFFLINE_AFTER_SECONDS (default 10). Long cycle is at least double or 60s.
+        RETRY_CYCLE_SHORT_COUNT = max(1, int(utils.OFFLINE_AFTER_SECONDS))
+        RETRY_CYCLE_LONG_COUNT = max(RETRY_CYCLE_SHORT_COUNT * 2, 60)
 
         try:
             # Call the battery's refresh_data function
@@ -797,6 +802,7 @@ class DbusHelper:
                     self.battery.setup_external_sensor()
 
             if result:
+                was_offline = self.battery.online is False
                 # check if battery has been reconnected
                 if self.battery.online is False and self.error["count"] >= RETRY_CYCLE_SHORT_COUNT:
                     logger.info(">>> Battery reconnected <<<")
@@ -808,6 +814,15 @@ class DbusHelper:
                 self.battery.online = True
                 self.battery.connection_info = "Connected"
                 self.last_data_timestamp = int(time())
+
+                # accumulate offline duration when reconnecting
+                if was_offline and self.battery.stats is not None:
+                    offline_started = self.battery.stats.get("last_offline_started")
+                    if offline_started:
+                        self.battery.stats["offline_total_sec"] = self.battery.stats.get("offline_total_sec", 0) + max(
+                            0, int(time()) - int(offline_started)
+                        )
+                        self.battery.stats["last_offline_started"] = None
 
                 # unblock charge/discharge, if it was blocked when battery went offline
                 if utils.BLOCK_ON_DISCONNECT:
@@ -868,6 +883,11 @@ class DbusHelper:
 
                             # reset the battery values
                             logger.error(">>> ERROR: Battery does not respond, init/reset values <<<")
+
+                            # track offline events duration start
+                            if self.battery.stats is not None:
+                                self.battery.stats["offline_events"] = self.battery.stats.get("offline_events", 0) + 1
+                                self.battery.stats["last_offline_started"] = int(time())
 
                             # check if the cell voltages are good to go for some minutes
                             if self.cell_voltages_good is None:
@@ -964,6 +984,12 @@ class DbusHelper:
         self._dbusservice["/ConnectionInformation"] = self.battery.connection_info
         self._dbusservice["/Connected"] = 1 if self.battery.online else 0
         self._dbusservice["/Info/LastDataUpdate"] = self.last_data_timestamp
+        # publish stats (JSON) if available
+        if self.battery.stats is not None:
+            try:
+                self._dbusservice["/Info/BleStatsJson"] = json.dumps(self.battery.stats)
+            except Exception:
+                self._dbusservice["/Info/BleStatsJson"] = None
 
         self._dbusservice["/History/DeepestDischarge"] = (
             abs(self.battery.history.deepest_discharge) * -1 if self.battery.history.deepest_discharge is not None else None

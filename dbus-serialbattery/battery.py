@@ -315,6 +315,8 @@ class Battery(ABC):
         self.discharge_fet: bool = None
         self.balance_fet: bool = None
         self.block_because_disconnect: bool = False
+        # stats container, can be filled by specific drivers (e.g. BLE) and published to dbus
+        self.stats: dict = {}
         self.control_charge_current: int = None
         self.control_discharge_current: int = None
         self.control_allow_charge: bool = None

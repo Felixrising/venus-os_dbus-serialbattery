@@ -164,6 +164,10 @@ class Jkbms_Ble(Battery):
             if st is None:
                 return False
 
+            # sync connectivity stats into the battery for dbus publishing
+            if hasattr(self, "stats") and hasattr(self.jk, "stats"):
+                self.stats.update(self.jk.stats)
+
             last_update = int(time() - st["last_update"])
             if last_update >= 15 and last_update % 15 == 0:
                 logger.info(f"Jkbms_Ble: Bluetooth connection interrupted. Got no fresh data since {last_update} s.")

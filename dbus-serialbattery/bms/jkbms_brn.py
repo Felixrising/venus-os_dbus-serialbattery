@@ -157,6 +157,17 @@ class Jkbms_Brn:
         self.trigger_soc_reset = False
         self.bt_client = None
         self.last_status = {"device_info": False, "cell_info": False, "settings": False}
+        # Connectivity stats (lightweight)
+        self.stats = {
+            "connect_attempts": 0,
+            "connect_success": 0,
+            "connect_fail_timeout": 0,
+            "connect_fail_notfound": 0,
+            "connect_fail_other": 0,
+            "connect_latency_ms_last": None,
+            "connect_latency_ms_avg": None,
+            "adapter_resets": 0,
+        }
 
     async def scanForDevices(self):
         devices = await BleakScanner.discover()
@@ -454,7 +465,14 @@ class Jkbms_Brn:
 
             try:
                 logger.info("|- Try to connect to Jkbms_Ble at " + self.address)
+                self.stats["connect_attempts"] = self.stats.get("connect_attempts", 0) + 1
+                start = time()
                 await self.bt_client.connect()  # default timeout 10s
+                latency_ms = int((time() - start) * 1000)
+                self.stats["connect_latency_ms_last"] = latency_ms
+                prev_avg = self.stats.get("connect_latency_ms_avg")
+                self.stats["connect_latency_ms_avg"] = latency_ms if prev_avg is None else int(prev_avg * 0.8 + latency_ms * 0.2)
+                self.stats["connect_success"] = self.stats.get("connect_success", 0) + 1
                 logger.info("|- Device connected, check if it's really a JKBMS")
 
                 # TODO: Sometimes settings data are received and sometimes not. Did not found yet found why.
@@ -484,8 +502,14 @@ class Jkbms_Brn:
                         await self.reset_soc_jk(self.bt_client)
                     await asyncio.sleep(0.01)
 
+            except TimeoutError:
+                self.stats["connect_fail_timeout"] = self.stats.get("connect_fail_timeout", 0) + 1
+                logger.info(f"BLE connect timeout on {self.address}")
+                self.run = False
+
             except exc.BleakDeviceNotFoundError:
                 logger.info(f"BLE client not found: {self.address} - is it turned on and nearby?")
+                self.stats["connect_fail_notfound"] = self.stats.get("connect_fail_notfound", 0) + 1
                 self.run = False
 
             except Exception:
@@ -496,6 +520,7 @@ class Jkbms_Brn:
                 ) = sys.exc_info()
                 file = exception_traceback.tb_frame.f_code.co_filename
                 line = exception_traceback.tb_lineno
+                self.stats["connect_fail_other"] = self.stats.get("connect_fail_other", 0) + 1
                 logger.info(f"Error while connecting to BLE client: {repr(exception_object)} " + f"of type {exception_type} in {file} line #{line}")
                 self.run = False
 
@@ -528,6 +553,7 @@ class Jkbms_Brn:
             if self.should_be_scraping is True and self.main_thread.is_alive():
                 logger.debug("scraping thread ended: reseting bluetooth and restarting")
                 if self.bt_reset is not None:
+                    self.stats["adapter_resets"] = self.stats.get("adapter_resets", 0) + 1
                     self.bt_reset()
                 sleep(backoff)
                 backoff = min(backoff * 2, 30)

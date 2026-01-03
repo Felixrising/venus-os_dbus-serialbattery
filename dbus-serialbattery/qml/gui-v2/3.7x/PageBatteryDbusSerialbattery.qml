@@ -111,6 +111,27 @@ Page {
 		return result.join(", ")
 	}
 
+	function formatBleStatsText() {
+		if (!bleStatsJson.valid || bleStatsJson.value === null || bleStatsJson.value === "") {
+			return "--"
+		}
+		try {
+			const s = JSON.parse(bleStatsJson.value)
+			function safe(v) { return v === undefined || v === null ? "--" : v }
+			return "Attempts: " + safe(s.connect_attempts)
+					+ " | OK: " + safe(s.connect_success)
+					+ " | Timeout: " + safe(s.connect_fail_timeout)
+					+ " | NotFound: " + safe(s.connect_fail_notfound)
+					+ " | Other: " + safe(s.connect_fail_other)
+					+ " | Lat ms last/avg: " + safe(s.connect_latency_ms_last) + "/" + safe(s.connect_latency_ms_avg)
+					+ " | Offline events: " + safe(s.offline_events)
+					+ " | Offline sec total: " + safe(s.offline_total_sec)
+					+ " | Adapter resets: " + safe(s.adapter_resets)
+		} catch (e) {
+			return "Stats unavailable"
+		}
+	}
+
 	VeQuickItem {
 		id: currentItem
 		uid: root.bindPrefix + "/Dc/0/Current"
@@ -134,6 +155,10 @@ Page {
 	VeQuickItem {
 		id: cellMaxItem
 		uid: root.bindPrefix + "/System/MaxCellVoltage"
+	}
+	VeQuickItem {
+		id: bleStatsJson
+		uid: root.bindPrefix + "/Info/BleStatsJson"
 	}
 	VeQuickItem {
 		id: socItem
@@ -784,6 +809,22 @@ Page {
 			SettingsListHeader {
 				text: "Driver Debug Data"
                 preferredVisible: chargeModeDebug.valid
+			}
+
+			ListItem {
+				text: "BLE Stats"
+				preferredVisible: bleStatsJson.valid && bleStatsJson.value !== null && bleStatsJson.value !== ""
+
+				bottomContentChildren: [
+					PrimaryListLabel {
+						topPadding: 0
+						bottomPadding: 0
+						color: Theme.color_font_secondary
+						text: formatBleStatsText()
+						wrapMode: Text.Wrap
+						horizontalAlignment: Text.AlignLeft
+					}
+				]
 			}
 
 			ListItem {

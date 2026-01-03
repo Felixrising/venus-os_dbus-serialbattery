@@ -265,6 +265,8 @@ BLOCK_ON_DISCONNECT: bool = get_bool_from_config("DEFAULT", "BLOCK_ON_DISCONNECT
 BLOCK_ON_DISCONNECT_TIMEOUT_MINUTES: float = get_float_from_config("DEFAULT", "BLOCK_ON_DISCONNECT_TIMEOUT_MINUTES")
 BLOCK_ON_DISCONNECT_VOLTAGE_MIN: float = get_float_from_config("DEFAULT", "BLOCK_ON_DISCONNECT_VOLTAGE_MIN")
 BLOCK_ON_DISCONNECT_VOLTAGE_MAX: float = get_float_from_config("DEFAULT", "BLOCK_ON_DISCONNECT_VOLTAGE_MAX")
+# Time (seconds) without data before we mark the battery offline and raise /Alarms/BmsCable
+OFFLINE_AFTER_SECONDS: int = max(1, get_int_from_config("DEFAULT", "OFFLINE_AFTER_SECONDS"))
 
 # make some checks for most common misconfigurations
 if not BLOCK_ON_DISCONNECT:
