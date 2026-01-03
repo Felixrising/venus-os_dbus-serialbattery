@@ -20,6 +20,19 @@ We’ve improved Bluetooth resilience (JKBMS and general BLE handling). Please h
 - Rapid disconnect/reconnect bursts: ensure reconnection pacing doesn’t thrash (backoff grows then resets after stable data).
 - Victron integration: systemcalc/VRM should reflect offline/online correctly when `/Connected` flips; no unexpected errors in logs.
 
+### How to install for testing (from master)
+
+- On your Venus OS box (already SSH’d in):
+  ```sh
+  cd /data/apps
+  curl -L https://github.com/Felixrising/venus-os_dbus-serialbattery/archive/master.tar.gz \
+    | tar xzf - --strip-components=1 -C /data/apps dbus-serialbattery/dbus-serialbattery
+  # keep your config.ini if present
+  cp -n /data/apps/dbus-serialbattery/config.default.ini /data/apps/dbus-serialbattery/config.ini
+  /data/apps/dbus-serialbattery/enable.sh
+  ```
+  This pulls the latest master of this fork and enables the service. If you have a custom `config.ini`, restore it after extract or add `--exclude=config.ini` to the tar command.
+
 ## History
 
 The first version of this driver was released by [Louisvdw](https://github.com/Louisvdw/dbus-serialbattery) in September 2020.
