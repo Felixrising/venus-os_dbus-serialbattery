@@ -197,7 +197,7 @@ if [ -d "$pathGuiV2" ]; then
             then
                 echo "|- Copying PageBattery.qml..."
                 rm -f "/opt/victronenergy/gui-v2/Victron/VenusOS/pages/settings/devicelist/battery/PageBattery.qml" 2>/dev/null
-                cp -f "/data/apps/dbus-serialbattery/qml/gui-v2/${sourceQmlDir}/PageBattery.qml" "/opt/victronenergy/gui-v2/Victron/VenusOS/pages/settings/devicelist/battery/"
+                install -m 644 "/data/apps/dbus-serialbattery/qml/gui-v2/${sourceQmlDir}/PageBattery.qml" "/opt/victronenergy/gui-v2/Victron/VenusOS/pages/settings/devicelist/battery/"
                 ((filesChanged++))
             fi
 
@@ -206,7 +206,7 @@ if [ -d "$pathGuiV2" ]; then
             then
                 echo "|- Copying PageBatteryDbusSerialbattery.qml..."
                 rm -f "/opt/victronenergy/gui-v2/Victron/VenusOS/pages/settings/devicelist/battery/PageBatteryDbusSerialbattery.qml" 2>/dev/null
-                cp -f "/data/apps/dbus-serialbattery/qml/gui-v2/${sourceQmlDir}/PageBatteryDbusSerialbattery.qml" "/opt/victronenergy/gui-v2/Victron/VenusOS/pages/settings/devicelist/battery/"
+                install -m 644 "/data/apps/dbus-serialbattery/qml/gui-v2/${sourceQmlDir}/PageBatteryDbusSerialbattery.qml" "/opt/victronenergy/gui-v2/Victron/VenusOS/pages/settings/devicelist/battery/"
                 ((filesChanged++))
             fi
 
@@ -215,7 +215,7 @@ if [ -d "$pathGuiV2" ]; then
             then
                 echo "|- Copying PageBatteryDbusSerialbatteryCellVoltages.qml..."
                 rm -f "/opt/victronenergy/gui-v2/Victron/VenusOS/pages/settings/devicelist/battery/PageBatteryDbusSerialbatteryCellVoltages.qml" 2>/dev/null
-                cp -f "/data/apps/dbus-serialbattery/qml/gui-v2/${sourceQmlDir}/PageBatteryDbusSerialbatteryCellVoltages.qml" "/opt/victronenergy/gui-v2/Victron/VenusOS/pages/settings/devicelist/battery/"
+                install -m 644 "/data/apps/dbus-serialbattery/qml/gui-v2/${sourceQmlDir}/PageBatteryDbusSerialbatteryCellVoltages.qml" "/opt/victronenergy/gui-v2/Victron/VenusOS/pages/settings/devicelist/battery/"
                 ((filesChanged++))
             fi
 
@@ -224,7 +224,7 @@ if [ -d "$pathGuiV2" ]; then
             then
                 echo "|- Copying PageBatteryDbusSerialbatterySettings.qml..."
                 rm -f "/opt/victronenergy/gui-v2/Victron/VenusOS/pages/settings/devicelist/battery/PageBatteryDbusSerialbatterySettings.qml" 2>/dev/null
-                cp -f "/data/apps/dbus-serialbattery/qml/gui-v2/${sourceQmlDir}/PageBatteryDbusSerialbatterySettings.qml" "/opt/victronenergy/gui-v2/Victron/VenusOS/pages/settings/devicelist/battery/"
+                install -m 644 "/data/apps/dbus-serialbattery/qml/gui-v2/${sourceQmlDir}/PageBatteryDbusSerialbatterySettings.qml" "/opt/victronenergy/gui-v2/Victron/VenusOS/pages/settings/devicelist/battery/"
                 ((filesChanged++))
             fi
 
@@ -233,7 +233,7 @@ if [ -d "$pathGuiV2" ]; then
             then
                 echo "|- Copying PageBatteryDbusSerialbatteryTimeToSoc.qml..."
                 rm -f "/opt/victronenergy/gui-v2/Victron/VenusOS/pages/settings/devicelist/battery/PageBatteryDbusSerialbatteryTimeToSoc.qml" 2>/dev/null
-                cp -f "/data/apps/dbus-serialbattery/qml/gui-v2/${sourceQmlDir}/PageBatteryDbusSerialbatteryTimeToSoc.qml" "/opt/victronenergy/gui-v2/Victron/VenusOS/pages/settings/devicelist/battery/"
+                install -m 644 "/data/apps/dbus-serialbattery/qml/gui-v2/${sourceQmlDir}/PageBatteryDbusSerialbatteryTimeToSoc.qml" "/opt/victronenergy/gui-v2/Victron/VenusOS/pages/settings/devicelist/battery/"
                 ((filesChanged++))
             fi
 
