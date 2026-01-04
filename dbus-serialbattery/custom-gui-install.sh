@@ -57,6 +57,18 @@ fi
 echo ""
 
 
+# helper to install/copy files even if busybox lacks `install`
+function do_install () {
+    local src="$1"
+    local dst="$2"
+    if command -v install >/dev/null 2>&1; then
+        install -m 644 "$src" "$dst"
+    else
+        cp -f "$src" "$dst"
+    fi
+}
+
+
 # GUI V1
 if [ -d "$pathGuiV1" ]; then
 
@@ -205,7 +217,7 @@ if [ -d "$pathGuiV2" ]; then
             then
                 echo "|- Copying PageBattery.qml..."
                 rm -f "$destRoot/PageBattery.qml" 2>/dev/null
-                install -m 644 "/data/apps/dbus-serialbattery/qml/gui-v2/${sourceQmlDir}/PageBattery.qml" "$destRoot/"
+                do_install "/data/apps/dbus-serialbattery/qml/gui-v2/${sourceQmlDir}/PageBattery.qml" "$destRoot/"
                 ((filesChanged++))
             fi
 
@@ -214,7 +226,7 @@ if [ -d "$pathGuiV2" ]; then
             then
                 echo "|- Copying PageBatteryDbusSerialbattery.qml..."
                 rm -f "$destRoot/PageBatteryDbusSerialbattery.qml" 2>/dev/null
-                install -m 644 "/data/apps/dbus-serialbattery/qml/gui-v2/${sourceQmlDir}/PageBatteryDbusSerialbattery.qml" "$destRoot/"
+                do_install "/data/apps/dbus-serialbattery/qml/gui-v2/${sourceQmlDir}/PageBatteryDbusSerialbattery.qml" "$destRoot/"
                 ((filesChanged++))
             fi
 
@@ -223,7 +235,7 @@ if [ -d "$pathGuiV2" ]; then
             then
                 echo "|- Copying PageBatteryDbusSerialbatteryCellVoltages.qml..."
                 rm -f "$destRoot/PageBatteryDbusSerialbatteryCellVoltages.qml" 2>/dev/null
-                install -m 644 "/data/apps/dbus-serialbattery/qml/gui-v2/${sourceQmlDir}/PageBatteryDbusSerialbatteryCellVoltages.qml" "$destRoot/"
+                do_install "/data/apps/dbus-serialbattery/qml/gui-v2/${sourceQmlDir}/PageBatteryDbusSerialbatteryCellVoltages.qml" "$destRoot/"
                 ((filesChanged++))
             fi
 
@@ -232,7 +244,7 @@ if [ -d "$pathGuiV2" ]; then
             then
                 echo "|- Copying PageBatteryDbusSerialbatterySettings.qml..."
                 rm -f "$destRoot/PageBatteryDbusSerialbatterySettings.qml" 2>/dev/null
-                install -m 644 "/data/apps/dbus-serialbattery/qml/gui-v2/${sourceQmlDir}/PageBatteryDbusSerialbatterySettings.qml" "$destRoot/"
+                do_install "/data/apps/dbus-serialbattery/qml/gui-v2/${sourceQmlDir}/PageBatteryDbusSerialbatterySettings.qml" "$destRoot/"
                 ((filesChanged++))
             fi
 
@@ -241,7 +253,7 @@ if [ -d "$pathGuiV2" ]; then
             then
                 echo "|- Copying PageBatteryDbusSerialbatteryTimeToSoc.qml..."
                 rm -f "$destRoot/PageBatteryDbusSerialbatteryTimeToSoc.qml" 2>/dev/null
-                install -m 644 "/data/apps/dbus-serialbattery/qml/gui-v2/${sourceQmlDir}/PageBatteryDbusSerialbatteryTimeToSoc.qml" "$destRoot/"
+                do_install "/data/apps/dbus-serialbattery/qml/gui-v2/${sourceQmlDir}/PageBatteryDbusSerialbatteryTimeToSoc.qml" "$destRoot/"
                 ((filesChanged++))
             fi
 
