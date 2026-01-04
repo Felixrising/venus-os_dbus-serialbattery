@@ -15,9 +15,37 @@ Page {
 
 	title: battery.name
 
+	// Top-right device menu (restores default VenusOS device actions)
+	pageMenu: PageMenu {
+		PageMenuItem {
+			text: CommonWords.device_info_title
+			onClicked: Global.pageManager.pushPage("/pages/settings/PageDeviceInfo.qml",
+												  { "title": text, "bindPrefix": root.bindPrefix })
+		}
+		PageMenuItem {
+			//% "Parameters"
+			text: qsTrId("battery_settings_parameters")
+			onClicked: Global.pageManager.pushPage("/pages/settings/devicelist/battery/PageBatteryParameters.qml",
+												  { "title": text, "bindPrefix": root.bindPrefix })
+		}
+		PageMenuItem {
+			//% "Redetect Battery"
+			text: qsTrId("battery_redetect_battery")
+			enabled: redetectMenu.valid && redetectMenu.value === 0
+			visible: redetectMenu.valid
+			onClicked: redetectMenu.setValue(1)
+		}
+	}
+
 	Device {
 		id: battery
 		serviceUid: root.bindPrefix
+	}
+
+	// Used by the device menu
+	VeQuickItem {
+		id: redetectMenu
+		uid: root.bindPrefix + "/Redetect"
 	}
 
 	GradientListView {
