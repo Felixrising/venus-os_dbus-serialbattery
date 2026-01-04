@@ -15,6 +15,7 @@
 * Added: Daren 485 - Read SoH with https://github.com/mr-manuel/venus-os_dbus-serialbattery/pull/344 by @kopierschnitte
 * Added: KS48100 - Read SoH with https://github.com/mr-manuel/venus-os_dbus-serialbattery/pull/344 by @kopierschnitte
 * Added: Venus OS 3.7x GUIv2 support by @mr-manuel
+* Added: BLE - Expose connectivity stats/thresholds on dbus and GUI (offline delay, force-reset/polling flags, BLE reconnect metrics)
 * Changed: Daren 485 - Fixed charge/discharge calculation with https://github.com/mr-manuel/venus-os_dbus-serialbattery/pull/343 by @kopierschnitte
 * Changed: Fixed typo in activation instructions by @mr-manuel
 * Changed: JK Inverter BMS - Fixed serial number lenght by @mr-manuel
