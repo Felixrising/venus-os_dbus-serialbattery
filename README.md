@@ -24,16 +24,18 @@ We’ve improved Bluetooth resilience (JKBMS and general BLE handling). Please h
 
 - On your Venus OS box (already SSH’d in):
   ```sh
-  cd /data/apps
-  TS=$(date +%Y%m%d%H%M%S)
-  [ -d dbus-serialbattery ] && tar czf dbus-serialbattery-backup-$TS.tar.gz dbus-serialbattery
-  curl -L https://github.com/Felixrising/venus-os_dbus-serialbattery/archive/master.tar.gz \
-    | tar xzf - --strip-components=1 --exclude=config.ini -C /data/apps dbus-serialbattery/dbus-serialbattery
-  # keep your config.ini if present
-  cp -n /data/apps/dbus-serialbattery/config.default.ini /data/apps/dbus-serialbattery/config.ini
+  cd /data/apps && \
+  TS=$(date +%Y%m%d%H%M%S) && \
+  [ -d dbus-serialbattery ] && tar czf dbus-serialbattery-backup-$TS.tar.gz dbus-serialbattery && \
+  rm -rf /tmp/dbus-serialbattery-new && mkdir -p /tmp/dbus-serialbattery-new && \
+  curl -fsSL https://github.com/Felixrising/venus-os_dbus-serialbattery/archive/master.tar.gz \
+   | tar xzf - --strip-components=1 -C /tmp/dbus-serialbattery-new && \
+  rsync -av --exclude=config.ini /tmp/dbus-serialbattery-new/dbus-serialbattery/ dbus-serialbattery/ && \
+  rm -rf /tmp/dbus-serialbattery-new && \
+  cp -n /data/apps/dbus-serialbattery/config.default.ini /data/apps/dbus-serialbattery/config.ini && \
   /data/apps/dbus-serialbattery/enable.sh
   ```
-  This pulls the latest master of this fork, makes a timestamped backup if a previous install exists, preserves `config.ini`, and enables the service.
+  This pulls the latest master of this fork, makes a timestamped backup if a previous install exists, overlays code while preserving `config.ini`, and enables the service.
 
 ## History
 
