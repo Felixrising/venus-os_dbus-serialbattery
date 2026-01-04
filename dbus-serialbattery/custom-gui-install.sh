@@ -187,6 +187,11 @@ if [ -d "$pathGuiV2" ]; then
         fi
 
         if [ $installGuiV2Check -eq 0 ]; then
+            # Ensure target is writable (some systems remount gui-v2 as ro)
+            if mountpoint -q /opt/victronenergy/gui-v2; then
+                mount -o remount,rw /opt/victronenergy/gui-v2 2>/dev/null
+            fi
+
             # copy new PageBattery.qml if changed
             if ! cmp -s "/data/apps/dbus-serialbattery/qml/gui-v2/${sourceQmlDir}/PageBattery.qml" "/opt/victronenergy/gui-v2/Victron/VenusOS/pages/settings/devicelist/battery/PageBattery.qml"
             then
@@ -440,6 +445,11 @@ if [ $installGuiV2WasmCheck -eq 0 ]; then
 
                 echo "done."
 
+            fi
+
+            # Remount gui-v2 back to ro if we changed it
+            if mountpoint -q /opt/victronenergy/gui-v2; then
+                mount -o remount,ro /opt/victronenergy/gui-v2 2>/dev/null
             fi
 
         fi
