@@ -493,6 +493,9 @@ class DbusHelper:
         self._dbusservice.add_path("/HardwareVersion", self.battery.hardware_version)
         self._dbusservice.add_path("/Connected", 1)
         self._dbusservice.add_path("/Info/LastDataUpdate", None, writeable=False)
+        self._dbusservice.add_path("/Info/OfflineAfterSeconds", utils.OFFLINE_AFTER_SECONDS, writeable=False)
+        self._dbusservice.add_path("/Info/BleForceResetStack", utils.BLUETOOTH_FORCE_RESET_BLE_STACK, writeable=False)
+        self._dbusservice.add_path("/Info/BleUsePolling", utils.BLUETOOTH_USE_POLLING, writeable=False)
         # JSON-encoded lightweight stats (e.g. BLE connectivity)
         self._dbusservice.add_path("/Info/BleStatsJson", None, writeable=True)
         self._dbusservice.add_path(
@@ -984,6 +987,9 @@ class DbusHelper:
         self._dbusservice["/ConnectionInformation"] = self.battery.connection_info
         self._dbusservice["/Connected"] = 1 if self.battery.online else 0
         self._dbusservice["/Info/LastDataUpdate"] = self.last_data_timestamp
+        self._dbusservice["/Info/OfflineAfterSeconds"] = utils.OFFLINE_AFTER_SECONDS
+        self._dbusservice["/Info/BleForceResetStack"] = utils.BLUETOOTH_FORCE_RESET_BLE_STACK
+        self._dbusservice["/Info/BleUsePolling"] = utils.BLUETOOTH_USE_POLLING
         # publish stats (JSON) if available
         if self.battery.stats is not None:
             try:

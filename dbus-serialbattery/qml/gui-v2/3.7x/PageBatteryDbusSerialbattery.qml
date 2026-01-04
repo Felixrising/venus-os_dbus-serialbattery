@@ -118,15 +118,16 @@ Page {
 		try {
 			const s = JSON.parse(bleStatsJson.value)
 			function safe(v) { return v === undefined || v === null ? "--" : v }
-			return "Attempts: " + safe(s.connect_attempts)
-					+ " | OK: " + safe(s.connect_success)
-					+ " | Timeout: " + safe(s.connect_fail_timeout)
-					+ " | NotFound: " + safe(s.connect_fail_notfound)
-					+ " | Other: " + safe(s.connect_fail_other)
-					+ " | Lat ms last/avg: " + safe(s.connect_latency_ms_last) + "/" + safe(s.connect_latency_ms_avg)
-					+ " | Offline events: " + safe(s.offline_events)
-					+ " | Offline sec total: " + safe(s.offline_total_sec)
-					+ " | Adapter resets: " + safe(s.adapter_resets)
+			let line1 = "Attempts " + safe(s.connect_attempts)
+					+ "  OK " + safe(s.connect_success)
+					+ "  Timeout " + safe(s.connect_fail_timeout)
+					+ "  NotFound " + safe(s.connect_fail_notfound)
+					+ "  Other " + safe(s.connect_fail_other)
+			let line2 = "Latency ms last/avg " + safe(s.connect_latency_ms_last) + "/" + safe(s.connect_latency_ms_avg)
+					+ "  Offline events " + safe(s.offline_events)
+					+ "  Offline sec total " + safe(s.offline_total_sec)
+					+ "  Adapter resets " + safe(s.adapter_resets)
+			return line1 + "\n" + line2
 		} catch (e) {
 			return "Stats unavailable"
 		}
@@ -160,6 +161,14 @@ Page {
 		id: bleStatsJson
 		uid: root.bindPrefix + "/Info/BleStatsJson"
 	}
+	VeQuickItem { id: lastUpdate; uid: root.bindPrefix + "/Info/LastDataUpdate" }
+	VeQuickItem { id: connectionInfo; uid: root.bindPrefix + "/ConnectionInformation" }
+	VeQuickItem { id: offlineAfter; uid: root.bindPrefix + "/Info/OfflineAfterSeconds" }
+	VeQuickItem { id: bmsCableAlarm; uid: root.bindPrefix + "/Alarms/BmsCable" }
+	VeQuickItem { id: modulesOnline; uid: root.bindPrefix + "/System/NrOfModulesOnline" }
+	VeQuickItem { id: modulesOffline; uid: root.bindPrefix + "/System/NrOfModulesOffline" }
+	VeQuickItem { id: bleForceReset; uid: root.bindPrefix + "/Info/BleForceResetStack" }
+	VeQuickItem { id: bleUsePolling; uid: root.bindPrefix + "/Info/BleUsePolling" }
 	VeQuickItem {
 		id: socItem
 		uid: root.bindPrefix + "/Soc"
@@ -772,6 +781,23 @@ Page {
 				preferredVisible: secondaryLabel.text !== ""
 			}
 
+			ListText {
+				text: "BMS Cable alarm"
+				dataItem.uid: root.bindPrefix + "/Alarms/BmsCable"
+				preferredVisible: bmsCableAlarm.valid
+				secondaryText: bmsCableAlarm.valid ? bmsCableAlarm.value : "--"
+			}
+
+			ListText {
+				text: "Modules online/offline"
+				preferredVisible: modulesOnline.valid || modulesOffline.valid
+				secondaryText: {
+					const on = modulesOnline.valid ? modulesOnline.value : "--"
+					const off = modulesOffline.valid ? modulesOffline.value : "--"
+					return on + " / " + off
+				}
+			}
+
 			SettingsListHeader {
 				text: "Support"
 				// show only for mr-manuel/dbus-serialbattery (productId registered at Victron)
@@ -812,6 +838,25 @@ Page {
 			}
 
 			ListItem {
+				text: "Connection"
+				preferredVisible: lastUpdate.valid || connectionInfo.valid
+				bottomContentChildren: [
+					PrimaryListLabel {
+						topPadding: 0
+						bottomPadding: 0
+						color: Theme.color_font_secondary
+						text: {
+							const info = connectionInfo.valid && connectionInfo.value ? connectionInfo.value : "--"
+							const ts = lastUpdate.valid ? lastUpdate.value : "--"
+							return "Info: " + info + "\nLast data: " + ts
+						}
+						wrapMode: Text.Wrap
+						horizontalAlignment: Text.AlignLeft
+					}
+				]
+			}
+
+			ListItem {
 				text: "BLE Stats"
 				preferredVisible: bleStatsJson.valid && bleStatsJson.value !== null && bleStatsJson.value !== ""
 
@@ -822,6 +867,36 @@ Page {
 						color: Theme.color_font_secondary
 						text: formatBleStatsText()
 						wrapMode: Text.Wrap
+						horizontalAlignment: Text.AlignLeft
+					}
+				]
+			}
+
+			ListItem {
+				text: "BLE Config"
+				preferredVisible: bleForceReset.valid || bleUsePolling.valid
+				bottomContentChildren: [
+					PrimaryListLabel {
+						topPadding: 0
+						bottomPadding: 0
+						color: Theme.color_font_secondary
+						text: "Force reset: " + (bleForceReset.valid ? bleForceReset.value : "--")
+							  + "  |  Use polling: " + (bleUsePolling.valid ? bleUsePolling.value : "--")
+						wrapMode: Text.Wrap
+						horizontalAlignment: Text.AlignLeft
+					}
+				]
+			}
+
+			ListItem {
+				text: "Offline threshold (s)"
+				preferredVisible: offlineAfter.valid
+				bottomContentChildren: [
+					PrimaryListLabel {
+						topPadding: 0
+						bottomPadding: 0
+						color: Theme.color_font_secondary
+						text: offlineAfter.valid ? offlineAfter.value : "--"
 						horizontalAlignment: Text.AlignLeft
 					}
 				]
